@@ -1,3 +1,4 @@
+from random import randint
 from tkinter import *
 from tkinter import messagebox
 
@@ -77,7 +78,7 @@ def Destruct():
 def start():
     createBoard()
     createBoardList()
-    moveAI()
+    moveAI(True)
     root.mainloop()
 
 # to inserts X or O in the board
@@ -96,7 +97,7 @@ def insert(button, position):
         if count >= 5:
             checkWinner()
         else:
-            moveAI()
+            moveAI(False)
     else:
         messagebox.showinfo("Error", "This cell is already occupied")
 
@@ -114,7 +115,7 @@ def checkWinner():
         displayWinner("Tie")
     else:
         if count % 2 == 0:
-            moveAI()
+            moveAI(False)
 
 
 # to display the winning window
@@ -154,25 +155,98 @@ def Reset():
     boardList = [["", "", ""], ["", "", ""], ["", "", ""]]
     winnerWindow.destroy()
     createBoardList()
-    moveAI()
+    moveAI(True)
+
+# get the final best position to choose by the ai
+
+
+def getBestPosition(boardListCopy):
+    global btnsList
+    clonedBoardList = boardListCopy
+    bestScore = -1000
+    bestPosition = (0, 0)
+    for i in range(3):
+        for j in range(3):
+            if clonedBoardList[i][j] == "":
+                clonedBoardList[i][j] = "X"
+                # apply the minimax algorithm on the cloned board list
+                score = minimax(clonedBoardList, 0, False)
+                if score > bestScore:
+                    bestScore = score
+                    bestPosition = (i, j)
+                clonedBoardList[i][j] = ""
+    return bestPosition
+
+
+# minimax algorithm
+def minimax(boardList, depth, isMaximizing):
+
+    if isWinning(boardList) != None:  # if None => no winner yet and still playing
+        return isWinning(boardList)  # 0, 1, -1
+    if isMaximizing:
+        bestScore = -1000
+        for i in range(3):
+            for j in range(3):
+                if boardList[i][j] == "":
+                    boardList[i][j] = "X"
+                    score = minimax(boardList, depth + 1, False)
+                    bestScore = max(score, bestScore)
+                    boardList[i][j] = ""
+        return bestScore
+    else:
+        bestScore = 1000
+        for i in range(3):
+            for j in range(3):
+                if boardList[i][j] == "":
+                    boardList[i][j] = "O"
+                    score = minimax(boardList, depth + 1, True)
+                    bestScore = min(score, bestScore)
+                    boardList[i][j] = ""
+        return bestScore
+
+
+# give me the expected board with the player you want => give me if he would won
+
+
+def isWinning(boardList):
+    isTie = True
+    for i in range(3):
+        # check for X
+        if boardList[i][0] == boardList[i][1] == boardList[i][2] == "X" or boardList[0][i] == boardList[1][i] == boardList[2][i] == "X" or boardList[0][0] == boardList[1][1] == boardList[2][2] == "X" or boardList[0][2] == boardList[1][1] == boardList[2][0] == "X":
+            return 1
+        # check for O
+        if boardList[i][0] == boardList[i][1] == boardList[i][2] == "O" or boardList[0][i] == boardList[1][i] == boardList[2][i] == "O" or boardList[0][0] == boardList[1][1] == boardList[2][2] == "O" or boardList[0][2] == boardList[1][1] == boardList[2][0] == "O":
+            return -1
+        for j in range(3):
+            if boardList[i][j] == "":
+                isTie = False
+    # check for tie
+    if isTie:
+        return 0
+    # still playing without winner yet
+    return None
 
 # the computer move
 
 
-def moveAI():
+def moveAI(isStart):
     global btnsList, boardList, count, root
-    for btnIndex in range(len(btnsList)):
-        if btnsList[btnIndex]["text"] == "":
-            btnsList[btnIndex]["text"] = "X"
-            position = getBtnPosition(btnIndex)
-            boardList[position[0]][position[1]] = "X"
-            lablel_1 = Label(root, text="Player (O)", height=3, font=(
-                "COMIC SANS MS", 10, "bold"), bg="white")
-            lablel_1.grid(row=0, column=1, columnspan=1)
-            count += 1
-            if count >= 5:
-                checkWinner()
-            break
+    if isStart:
+        position = (randint(0, 2), randint(0, 2))
+        boardList[position[0]][position[1]] = "X"
+        btnsList[getBtnIndex(position)]["text"] = "X"
+    else:
+        position = getBestPosition(boardList.copy())
+        boardList[position[0]][position[1]] = "X"
+        btnsList[getBtnIndex(position)]["text"] = "X"
+    lablel_1 = Label(root, text="Player (O)", height=3, font=(
+        "COMIC SANS MS", 10, "bold"), bg="white")
+    lablel_1.grid(row=0, column=1, columnspan=1)
+    count += 1
+    if count >= 5:
+        checkWinner()
+
+# input is a button index => output is its position
 
 
 def getBtnPosition(btnIndex):
@@ -180,6 +254,12 @@ def getBtnPosition(btnIndex):
         for j in range(3):
             if i*3+j == btnIndex:
                 return (i, j)
+
+
+# from position, get the index of the btn inside the btnsList
+
+def getBtnIndex(position):
+    return position[0]*3+position[1]
 
 
 start()
