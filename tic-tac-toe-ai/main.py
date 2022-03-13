@@ -5,7 +5,7 @@ from tkinter import messagebox
 
 
 def createBoard():
-    global root, count
+    global root, count, btnsList
     global b1, b2, b3, b4, b5, b6, b7, b8, b9
     count = 0
     root = Tk()
@@ -44,6 +44,8 @@ def createBoard():
     b7.grid(row=4, column=0)
     b8.grid(row=4, column=1)
     b9.grid(row=4, column=2)
+    btnsList = [b1, b2, b3, b4, b5, b6, b7, b8, b9]
+
 
 # to create the list that would store the state of our game
 
@@ -52,7 +54,7 @@ def createBoardList():
     global boardList
     boardList = [["", "", ""], ["", "", ""], ["", "", ""]]
 
-# to quit the tkinter board window
+# to quit the tkinter 0board window
 
 
 def Quit():
@@ -75,6 +77,7 @@ def Destruct():
 def start():
     createBoard()
     createBoardList()
+    moveAI()
     root.mainloop()
 
 # to inserts X or O in the board
@@ -83,13 +86,7 @@ def start():
 def insert(button, position):
     global count, root
     if button["text"] == "":
-        if count % 2 == 0:
-            button["text"] = "X"
-            boardList[position[0]][position[1]] = "X"
-            lablel_1 = Label(root, text="Player (O)", height=3, font=(
-                "COMIC SANS MS", 10, "bold"), bg="white")
-            lablel_1.grid(row=0, column=1, columnspan=1)
-        else:
+        if count % 2 != 0:
             button["text"] = "O"
             boardList[position[0]][position[1]] = "O"
             lablel_1 = Label(root, text="Player (X)", height=3, font=(
@@ -98,6 +95,8 @@ def insert(button, position):
         count += 1
         if count >= 5:
             checkWinner()
+        else:
+            moveAI()
     else:
         messagebox.showinfo("Error", "This cell is already occupied")
 
@@ -113,6 +112,10 @@ def checkWinner():
             displayWinner("Player (X)")
     elif count == 9:
         displayWinner("Tie")
+    else:
+        if count % 2 == 0:
+            moveAI()
+
 
 # to display the winning window
 
@@ -151,6 +154,32 @@ def Reset():
     boardList = [["", "", ""], ["", "", ""], ["", "", ""]]
     winnerWindow.destroy()
     createBoardList()
+    moveAI()
+
+# the computer move
+
+
+def moveAI():
+    global btnsList, boardList, count, root
+    for btnIndex in range(len(btnsList)):
+        if btnsList[btnIndex]["text"] == "":
+            btnsList[btnIndex]["text"] = "X"
+            position = getBtnPosition(btnIndex)
+            boardList[position[0]][position[1]] = "X"
+            lablel_1 = Label(root, text="Player (O)", height=3, font=(
+                "COMIC SANS MS", 10, "bold"), bg="white")
+            lablel_1.grid(row=0, column=1, columnspan=1)
+            count += 1
+            if count >= 5:
+                checkWinner()
+            break
+
+
+def getBtnPosition(btnIndex):
+    for i in range(3):
+        for j in range(3):
+            if i*3+j == btnIndex:
+                return (i, j)
 
 
 start()
